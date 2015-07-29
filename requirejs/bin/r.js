@@ -1,6 +1,5 @@
-#!/usr/bin/env node
 /**
- * @license r.js 2.1.20 Copyright (c) 2010-2015, The Dojo Foundation All Rights Reserved.
+ * @license r.js 2.1.22 Copyright (c) 2010-2015, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/jrburke/requirejs for details
  */
@@ -21,7 +20,7 @@ var requirejs, require, define, xpcUtil;
 (function (console, args, readFileFunc) {
     var fileName, env, fs, vm, path, exec, rhinoContext, dir, nodeRequire,
         nodeDefine, exists, reqMain, loadedOptimizedLib, existsForNode, Cc, Ci,
-        version = '2.1.20',
+        version = '2.1.22',
         jsSuffixRegExp = /\.js$/,
         commandOption = '',
         useLibLoaded = {},
@@ -26802,7 +26801,9 @@ define('pragma', ['parse', 'logger'], function (parse, logger) {
             return config.useStrict ? contents : contents.replace(pragma.useStrictRegExp, '$1');
         },
 
-        namespace: function (fileContents, ns, onLifecycleName) {
+        namespace: function (fileContents, config, onLifecycleName) {
+            var ns = config.namespace,
+                namespaceWrapLocals = config.namespaceWrapLocals ? config.namespaceWrapLocals +  "\n" : '';
             if (ns) {
                 //Namespace require/define calls
                 fileContents = fileContents.replace(pragma.configRegExp, '$1' + ns + '.$2$3(');
@@ -26845,6 +26846,7 @@ define('pragma', ['parse', 'logger'], function (parse, logger) {
                     //to contain the API globals.
                     fileContents = "var " + ns + ";(function () { if (!" + ns + " || !" + ns + ".requirejs) {\n" +
                                     "if (!" + ns + ") { " + ns + ' = {}; } else { require = ' + ns + '; }\n' +
+                                    namespaceWrapLocals +
                                     fileContents +
                                     "\n" +
                                     ns + ".requirejs = requirejs;" +
@@ -27014,7 +27016,7 @@ define('pragma', ['parse', 'logger'], function (parse, logger) {
 
             //Do namespacing
             if (onLifecycleName === 'OnSave' && config.namespace) {
-                fileContents = pragma.namespace(fileContents, config.namespace, onLifecycleName);
+                fileContents = pragma.namespace(fileContents, config, onLifecycleName);
             }
 
 
@@ -30204,7 +30206,7 @@ define('build', function (require) {
                                 }
 
                                 if (namespace) {
-                                    currContents = pragma.namespace(currContents, namespace);
+                                    currContents = pragma.namespace(currContents, config);
                                 }
 
                                 currContents = build.toTransport(namespace, moduleName, path, currContents, layer, {
